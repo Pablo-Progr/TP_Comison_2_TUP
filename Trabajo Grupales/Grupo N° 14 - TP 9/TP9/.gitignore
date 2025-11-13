@@ -9,3 +9,4 @@ node_modules/
 # Logs y otros temporales de desarrollo
 *.log
 npm-debug.log*
+/src/generated/prisma

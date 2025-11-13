@@ -1,0 +1,86 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// Usuarios del sistema (admin/operador)
+model usuarios {
+  usuario_id    Int       @id @default(autoincrement())
+  nombre        String    @db.VarChar(100)
+  apellido      String?   @db.VarChar(100)
+  correo        String    @unique @db.VarChar(150)
+  contrasena    String    @db.VarChar(255)
+  password_hash String?   @db.VarChar(255)
+  rol           String    @default("admin") @db.VarChar(20)
+  creado_en     DateTime  @default(now()) @db.Timestamp(0)
+}
+
+// Socios
+model socios {
+  id              Int               @id @default(autoincrement())
+  nombre          String            @db.VarChar(120)
+  dni             String?           @unique @db.VarChar(20)
+  telefono        String?           @db.VarChar(30)
+  email           String            @unique @db.VarChar(150)
+  password        String            @db.VarChar(255)
+  creado_en       DateTime          @default(now()) @db.Timestamp(0)
+  socios_deportes socios_deportes[]
+  pagos           pagos[]
+}
+
+// Deportes
+model deportes {
+  id              Int               @id @default(autoincrement())
+  nombre          String            @unique @db.VarChar(120)
+  cuota_mensual   Decimal           @db.Decimal(10, 2)
+  socios_deportes socios_deportes[]
+  pagos           pagos[]
+}
+
+// Relación Socios <-> Deportes
+model socios_deportes {
+  id                Int      @id @default(autoincrement())
+  socio_id          Int
+  deporte_id        Int
+  fecha_inscripcion DateTime @default(now()) @db.DateTime(0)
+  socios            socios   @relation(fields: [socio_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  deportes          deportes @relation(fields: [deporte_id], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@unique([socio_id, deporte_id], map: "uq_socio_deporte")
+  @@index([deporte_id], map: "fk_sd_deporte")
+}
+
+// Pagos
+model pagos {
+  id         Int      @id @default(autoincrement())
+  socio_id   Int
+  deporte_id Int
+  mes        Int      @db.TinyInt
+  anio       Int
+  monto      Decimal  @db.Decimal(10, 2)
+  fecha_pago DateTime @default(now()) @db.DateTime(0)
+  socios     socios   @relation(fields: [socio_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  deportes   deportes @relation(fields: [deporte_id], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@unique([socio_id, deporte_id, mes, anio], map: "uq_pago_unico")
+  @@index([deporte_id], map: "fk_pago_deporte")
+}
+
+// Password resets (tokens para recuperación)
+model password_resets {
+  id         BigInt    @id @default(autoincrement())
+  user_type  String    @db.VarChar(20)
+  user_id    Int
+  email      String    @db.VarChar(150)
+  token      String    @unique @db.VarChar(64)
+  expires_at DateTime  @db.DateTime(0)
+  used_at    DateTime? @db.DateTime(0)
+  created_at DateTime  @default(now()) @db.Timestamp(0)
+
+  @@index([email], map: "idx_email")
+  @@index([user_type, user_id], map: "idx_user")
+}

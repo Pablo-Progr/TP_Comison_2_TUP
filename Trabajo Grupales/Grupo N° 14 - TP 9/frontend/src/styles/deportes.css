@@ -1,0 +1,214 @@
+/* General container for the Deportes page */
+.deportes-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  padding: 20px;
+}
+
+/* Header section */
+.deportes-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 40px;
+  background: white;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.deportes-header h1 {
+  margin: 0;
+  color: #333;
+  font-size: 28px;
+}
+
+.create-button {
+  padding: 10px 20px;
+  background: #43e97b;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.create-button:hover {
+  background: #38f9d7;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(67, 233, 123, 0.3);
+}
+
+/* Table styles */
+.deportes-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.deportes-table th,
+.deportes-table td {
+  padding: 15px;
+  text-align: left;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.deportes-table th {
+  background: #f5f5f5;
+  color: #333;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.deportes-table tr:hover {
+  background: #f9f9f9;
+}
+
+/* Action buttons */
+.action-button {
+  padding: 8px 12px;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-right: 10px; /* Adds spacing between buttons */
+}
+
+.action-button:hover {
+  background: #764ba2;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+}
+
+/* Modal overlay to cover the entire screen */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+/* Modal box styling */
+.modal {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  animation: fadeIn 0.3s ease;
+}
+
+/* Modal title */
+.modal h2 {
+  margin-top: 0;
+  font-size: 24px;
+  color: #333;
+}
+
+/* Modal input fields */
+.modal label {
+  display: block;
+  margin: 10px 0 5px;
+  font-size: 14px;
+  color: #555;
+}
+
+.modal input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  margin-bottom: 15px;
+}
+
+/* Modal action buttons */
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.modal-actions button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.modal-actions button:first-child {
+  background: #43e97b;
+  color: white;
+}
+
+.modal-actions button:first-child:hover {
+  background: #38f9d7;
+}
+
+.modal-actions button:last-child {
+  background: #f44336;
+  color: white;
+}
+
+.modal-actions button:last-child:hover {
+  background: #d32f2f;
+}
+
+/* Fade-in animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .deportes-header {
+    flex-direction: column;
+    gap: 15px;
+    padding: 20px;
+  }
+
+  .deportes-header h1 {
+    font-size: 22px;
+    text-align: center;
+  }
+
+  .deportes-table th,
+  .deportes-table td {
+    padding: 10px;
+  }
+}
+
+/* Apply a modern font to the entire page */
+body {
+  font-family: 'Roboto', sans-serif;
+}
+
+/* Ensure headings and buttons inherit the new font */
+h1, h2, h3, button {
+  font-family: 'Roboto', sans-serif;
+}
