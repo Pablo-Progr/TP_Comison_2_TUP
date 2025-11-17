@@ -1,13 +1,11 @@
-const prisma = require('../config/prisma');
+const db = require('../config/DB');
 
 // Obtener todos los deportes
-exports.getAll = async (req, res) => {
+const getAll = async (req, res) => {
   try {
-    const deportes = await prisma.deportes.findMany({
-      orderBy: {
-        id: 'desc',
-      },
-    });
+    const [deportes] = await db.query(
+      'SELECT id, nombre, cuota_mensual FROM deportes ORDER BY id DESC'
+    );
     res.json(deportes);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -15,81 +13,92 @@ exports.getAll = async (req, res) => {
 };
 
 // Obtener un deporte por ID
-exports.getById = async (req, res) => {
+const getById = async (req, res) => {
   try {
     const { id } = req.params;
-    const deporte = await prisma.deportes.findUnique({
-      where: { id: parseInt(id) },
-    });
+    const [deportes] = await db.query(
+      'SELECT id, nombre, cuota_mensual FROM deportes WHERE id = ?',
+      [parseInt(id)]
+    );
 
-    if (!deporte) {
+    if (deportes.length === 0) {
       return res.status(404).json({ error: 'Deporte no encontrado' });
     }
 
-    res.json(deporte);
+    res.json(deportes[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
 // Crear deporte
-exports.create = async (req, res) => {
+const create = async (req, res) => {
   try {
     const { nombre, cuota_mensual } = req.body;
     if (!nombre || cuota_mensual == null) {
       return res.status(400).json({ error: 'El nombre y la cuota_mensual son obligatorios' });
     }
 
-    const deporte = await prisma.deportes.create({
-      data: {
-        nombre,
-        cuota_mensual,
-      },
-    });
+    const [result] = await db.query(
+      'INSERT INTO deportes (nombre, cuota_mensual) VALUES (?, ?)',
+      [nombre, cuota_mensual]
+    );
 
-    res.status(201).json(deporte);
+    res.status(201).json({
+      id: result.insertId,
+      nombre,
+      cuota_mensual
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
 // Actualizar deporte
-exports.update = async (req, res) => {
+const update = async (req, res) => {
   try {
     const { id } = req.params;
     const { nombre, cuota_mensual } = req.body;
 
-    await prisma.deportes.update({
-      where: { id: parseInt(id) },
-      data: {
-        nombre,
-        cuota_mensual,
-      },
-    });
+    const [result] = await db.query(
+      'UPDATE deportes SET nombre = ?, cuota_mensual = ? WHERE id = ?',
+      [nombre, cuota_mensual, parseInt(id)]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Deporte no encontrado' });
+    }
 
     res.json({ ok: true, mensaje: 'Deporte actualizado correctamente' });
   } catch (err) {
-    if (err.code === 'P2025') {
-      return res.status(404).json({ error: 'Deporte no encontrado' });
-    }
     res.status(500).json({ error: err.message });
   }
 };
 
 // Eliminar deporte
-exports.remove = async (req, res) => {
+const remove = async (req, res) => {
   try {
     const { id } = req.params;
 
-    await prisma.deportes.delete({
-      where: { id: parseInt(id) },
-    });
+    const [result] = await db.query(
+      'DELETE FROM deportes WHERE id = ?',
+      [parseInt(id)]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Deporte no encontrado' });
+    }
 
     res.json({ ok: true, mensaje: 'Deporte eliminado correctamente' });
   } catch (err) {
-    if (err.code === 'P2025') {
-      return res.status(404).json({ error: 'Deporte no encontrado' });
-    }
     res.status(500).json({ error: err.message });
   }
+};
+
+module.exports = {
+  getAll,
+  getById,
+  create,
+  update,
+  remove
 };

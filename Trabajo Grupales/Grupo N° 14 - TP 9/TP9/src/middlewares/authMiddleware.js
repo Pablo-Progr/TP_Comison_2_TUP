@@ -15,6 +15,7 @@ const verificarToken = (req, res, next) => {
 
     req.user = decoded; 
     next();
+    
   } catch (err) {
     // jwt.verify lanza error si el token es inválido o expiró
     if (err.name === "TokenExpiredError") {

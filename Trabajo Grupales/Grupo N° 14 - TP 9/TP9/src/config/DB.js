@@ -1,8 +1,5 @@
 // config/DB.js
-
-//Se cambio a Prisma como ORM para la gestión de la base de datos
-
-/*const mysql = require("mysql2");
+const mysql = require("mysql2");
 const dotenv = require("dotenv");
 dotenv.config();
 
@@ -16,9 +13,7 @@ const pool = mysql.createPool({
   queueLimit: 0,
 });
 
-// Export default (callback-based)
-module.exports = pool;
-
-// Export helper para promesas
+// Export con promesas
 const promisePool = pool.promise();
-module.exports.promise = () => promisePool;*/
+
+module.exports = promisePool;

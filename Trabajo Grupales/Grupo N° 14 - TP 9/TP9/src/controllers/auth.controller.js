@@ -1,7 +1,7 @@
 // controllers/auth.controller.js
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
-const prisma = require("../config/prisma");
+const db = require("../config/DB");
 
 function signToken(payload) {
   return jwt.sign(payload, process.env.JWT_SECRET || "dev-secret", {
@@ -9,7 +9,7 @@ function signToken(payload) {
   });
 }
 
-exports.authLogin = async (req, res) => {
+const authLogin = async (req, res) => {
   try {
     const { email, password } = req.body || {};
     if (!email || !password) {
@@ -19,16 +19,13 @@ exports.authLogin = async (req, res) => {
     }
 
     // 1) Intentar como socio (bcrypt obligado)
-    const socio = await prisma.socios.findUnique({
-      where: { email },
-      select: {
-        id: true,
-        email: true,
-        password: true,
-      },
-    });
+    const [socios] = await db.query(
+      'SELECT id, email, password FROM socios WHERE email = ?',
+      [email]
+    );
 
-    if (socio) {
+    if (socios.length > 0) {
+      const socio = socios[0];
       const ok = await bcrypt.compare(password, socio.password);
       if (!ok) {
         return res
@@ -49,21 +46,16 @@ exports.authLogin = async (req, res) => {
     }
 
     // 2) Intentar como usuario staff (admin/operador)
-    const usuario = await prisma.usuarios.findFirst({
-      where: { correo: email },
-      select: {
-        usuario_id: true,
-        correo: true,
-        contrasena: true,
-        password_hash: true,
-        rol: true,
-      },
-    });
+    const [usuarios] = await db.query(
+      'SELECT usuario_id, correo, contrasena, password_hash, rol FROM usuarios WHERE correo = ?',
+      [email]
+    );
 
-    if (!usuario) {
+    if (usuarios.length === 0) {
       return res.status(401).json({ ok: false, msg: "Credenciales inválidas" });
     }
 
+    const usuario = usuarios[0];
     let valid = false;
 
     if (usuario.password_hash && usuario.password_hash.length > 0) {
@@ -95,4 +87,8 @@ exports.authLogin = async (req, res) => {
     console.error("authLogin error", err);
     res.status(500).json({ ok: false, msg: "Error interno" });
   }
+};
+
+module.exports = {
+  authLogin,
 };

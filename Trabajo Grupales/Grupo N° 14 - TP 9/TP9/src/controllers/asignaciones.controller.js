@@ -1,43 +1,25 @@
-const prisma = require('../config/prisma');
+const db = require('../config/DB');
 
 // Listar todas las asignaciones
-exports.getAll = async (req, res) => {
+const getAll = async (req, res) => {
   try {
-    const asignaciones = await prisma.socios_deportes.findMany({
-      include: {
-        socios: {
-          select: {
-            id: true,
-            nombre: true,
-            dni: true,
-          },
-        },
-        deportes: {
-          select: {
-            id: true,
-            nombre: true,
-            cuota_mensual: true,
-          },
-        },
-      },
-      orderBy: {
-        id: 'desc',
-      },
-    });
+    const [asignaciones] = await db.query(`
+      SELECT 
+        sd.id,
+        sd.socio_id,
+        s.nombre AS socio_nombre,
+        s.dni,
+        sd.deporte_id,
+        d.nombre AS deporte_nombre,
+        d.cuota_mensual,
+        sd.fecha_inscripcion
+      FROM socios_deportes sd
+      JOIN socios s ON sd.socio_id = s.id
+      JOIN deportes d ON sd.deporte_id = d.id
+      ORDER BY sd.id DESC
+    `);
 
-    // Transformar la respuesta para que coincida con el formato anterior
-    const resultado = asignaciones.map(a => ({
-      id: a.id,
-      socio_id: a.socios.id,
-      socio_nombre: a.socios.nombre,
-      dni: a.socios.dni,
-      deporte_id: a.deportes.id,
-      deporte_nombre: a.deportes.nombre,
-      cuota_mensual: a.deportes.cuota_mensual,
-      fecha_inscripcion: a.fecha_inscripcion,
-    }));
-
-    res.json(resultado);
+    res.json(asignaciones);
   } catch (err) {
     console.error("Error en getAll:", err);
     res.status(500).json({ error: "Error interno" });
@@ -45,31 +27,20 @@ exports.getAll = async (req, res) => {
 };
 
 // Obtener deportes de un socio
-exports.getDeportesDeSocio = async (req, res) => {
+const getDeportesDeSocio = async (req, res) => {
   try {
     const { socio_id } = req.params;
     
-    const asignaciones = await prisma.socios_deportes.findMany({
-      where: {
-        socio_id: parseInt(socio_id),
-      },
-      include: {
-        deportes: {
-          select: {
-            id: true,
-            nombre: true,
-            cuota_mensual: true,
-          },
-        },
-      },
-    });
-
-    const deportes = asignaciones.map(a => ({
-      id: a.deportes.id,
-      nombre: a.deportes.nombre,
-      cuota_mensual: a.deportes.cuota_mensual,
-      fecha_inscripcion: a.fecha_inscripcion,
-    }));
+    const [deportes] = await db.query(`
+      SELECT 
+        d.id,
+        d.nombre,
+        d.cuota_mensual,
+        sd.fecha_inscripcion
+      FROM socios_deportes sd
+      JOIN deportes d ON sd.deporte_id = d.id
+      WHERE sd.socio_id = ?
+    `, [parseInt(socio_id)]);
 
     res.json(deportes);
   } catch (err) {
@@ -79,35 +50,22 @@ exports.getDeportesDeSocio = async (req, res) => {
 };
 
 // Obtener socios de un deporte
-exports.getSociosDeDeporte = async (req, res) => {
+const getSociosDeDeporte = async (req, res) => {
   try {
     const { deporte_id } = req.params;
     
-    const asignaciones = await prisma.socios_deportes.findMany({
-      where: {
-        deporte_id: parseInt(deporte_id),
-      },
-      include: {
-        socios: {
-          select: {
-            id: true,
-            nombre: true,
-            dni: true,
-            telefono: true,
-            email: true,
-          },
-        },
-      },
-    });
-
-    const socios = asignaciones.map(a => ({
-      id: a.socios.id,
-      nombre: a.socios.nombre,
-      dni: a.socios.dni,
-      telefono: a.socios.telefono,
-      email: a.socios.email,
-      fecha_inscripcion: a.fecha_inscripcion,
-    }));
+    const [socios] = await db.query(`
+      SELECT 
+        s.id,
+        s.nombre,
+        s.dni,
+        s.telefono,
+        s.email,
+        sd.fecha_inscripcion
+      FROM socios_deportes sd
+      JOIN socios s ON sd.socio_id = s.id
+      WHERE sd.deporte_id = ?
+    `, [parseInt(deporte_id)]);
 
     res.json(socios);
   } catch (err) {
@@ -117,19 +75,17 @@ exports.getSociosDeDeporte = async (req, res) => {
 };
 
 // Asignar un socio a un deporte
-exports.asignar = async (req, res) => {
+const asignar = async (req, res) => {
   try {
     const { socio_id, deporte_id } = req.body;
     if (!socio_id || !deporte_id) {
       return res.status(400).json({ error: 'socio_id y deporte_id son requeridos' });
     }
 
-    await prisma.socios_deportes.create({
-      data: {
-        socio_id: parseInt(socio_id),
-        deporte_id: parseInt(deporte_id),
-      },
-    });
+    await db.query(
+      'INSERT INTO socios_deportes (socio_id, deporte_id) VALUES (?, ?)',
+      [parseInt(socio_id), parseInt(deporte_id)]
+    );
 
     res.json({ ok: true, mensaje: 'Socio asignado al deporte correctamente' });
   } catch (err) {
@@ -139,21 +95,19 @@ exports.asignar = async (req, res) => {
 };
 
 // Desasignar un socio de un deporte
-exports.desasignar = async (req, res) => {
+const desasignar = async (req, res) => {
   try {
     const { socio_id, deporte_id } = req.body;
     if (!socio_id || !deporte_id) {
       return res.status(400).json({ error: 'socio_id y deporte_id son requeridos' });
     }
 
-    const result = await prisma.socios_deportes.deleteMany({
-      where: {
-        socio_id: parseInt(socio_id),
-        deporte_id: parseInt(deporte_id),
-      },
-    });
+    const [result] = await db.query(
+      'DELETE FROM socios_deportes WHERE socio_id = ? AND deporte_id = ?',
+      [parseInt(socio_id), parseInt(deporte_id)]
+    );
 
-    if (result.count === 0) {
+    if (result.affectedRows === 0) {
       return res.status(404).json({ error: 'No existía esa asignación' });
     }
 
@@ -162,4 +116,12 @@ exports.desasignar = async (req, res) => {
     console.error("Error en desasignar:", err);
     res.status(500).json({ error: "Error interno" });
   }
+};
+
+module.exports = {
+  getAll,
+  getDeportesDeSocio,
+  getSociosDeDeporte,
+  asignar,
+  desasignar
 };
